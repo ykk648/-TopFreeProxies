@@ -1,0 +1,15 @@
+{
+    "group":"FreeProxies",
+    "speedtestMode":"speedonly",
+    "pingMethod":"googleping",
+    "sortMethod":"rspeed",
+    "concurrency":32,
+    "testMode":2,
+    "subscription":"./sub/sub_merge_yaml.yaml",
+    "timeout":5,
+    "language":"en",
+    "unique": true,
+    "fontSize":24,
+    "theme":"rainbow",
+    "generatePicMode": 3
+}
