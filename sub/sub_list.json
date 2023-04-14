@@ -359,5 +359,13 @@
     "url": "https://github.com/mehdimoghaddam-cell/Clash-Subscription/raw/main/mehdimoghaddam-cell.yaml",
     "update_method": "auto",
     "enabled": true
+  },
+    {
+    "id": 87,
+    "remarks": "tg:@hgofxs",
+    "site": "https://t.me/ztztx",
+    "url": "https://pastebin.com/raw/SUNqDbpL",
+    "update_method": "auto",
+    "enabled": true
   }
 ]

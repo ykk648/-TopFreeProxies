@@ -8,4 +8,4 @@ echo "lite speed test done !"
 python ./utils/dummy_convert.py
 echo "clash yaml gen done !"
 git commit -a -m 'update'
-git push
+git push my HEAD:master
