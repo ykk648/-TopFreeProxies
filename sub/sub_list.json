@@ -51,7 +51,7 @@
     "id": 6,
     "remarks": "colatiger/v2ray-nodes",
     "site": "https://github.com/colatiger/v2ray-nodes",
-    "url": "https://proxy.huwo.club/v2ray.txt",
+    "url": " https://proxy.huwo.top/dy/hcc.yaml",
     "update_method": "auto",
     "enabled": true
   },
@@ -245,7 +245,7 @@
     "site": "https://github.com/kxswa/k",
     "url": "https://kxswa.tk/v2ray",
     "update_method": "auto",
-    "enabled": true
+    "enabled": false
   },
   {
     "id": 31,
@@ -340,7 +340,7 @@
     "id": 84,
     "remarks": "mianfeifq/share",
     "site": "https://github.com/mianfeifq/share",
-    "url": "https://raw.githubusercontent.com/mianfeifq/share/main/data2022126.txt",
+    "url": "https://raw.githubusercontent.com/mianfeifq/share/main/data2023049.txt",
     "update_method": "auto",
     "enabled": true
   },
@@ -354,17 +354,17 @@
   },
   {
     "id": 86,
-    "remarks": "mehdimoghaddam-cell/Clash-Subscription",
-    "site": "https://github.com/mehdimoghaddam-cell/Clash-Subscription",
-    "url": "https://github.com/mehdimoghaddam-cell/Clash-Subscription/raw/main/mehdimoghaddam-cell.yaml",
-    "update_method": "auto",
-    "enabled": true
-  },
-    {
-    "id": 87,
     "remarks": "tg:@hgofxs",
     "site": "https://t.me/ztztx",
     "url": "https://pastebin.com/raw/SUNqDbpL",
+    "update_method": "auto",
+    "enabled": true
+  },
+  {
+    "id": 87,
+    "remarks": "tg:@ShareCentrePro",
+    "site": "https://t.me/ShareCentrePro",
+    "url": "https://sub.sharecentre.online/sub",
     "update_method": "auto",
     "enabled": true
   }
