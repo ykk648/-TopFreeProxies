@@ -153,7 +153,7 @@ class SubMerge:
                     proxies = proxies.split('\n- ')
                     top_amount = len(proxies) - 1
 
-                lines.insert(index + 1, f'合并节点总数: `{top_amount}`\n')
+                lines.insert(index + 1, f'合并节点总数: `{top_amount}` 单一IP地址限制1个节点\n')
                 break
         # 节点来源打印
         for index in range(len(lines)):
