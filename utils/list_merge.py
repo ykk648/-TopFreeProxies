@@ -1,17 +1,15 @@
 #!/usr/bin/env python3
 
 import json
-import os
 import re
+from pathlib import Path
 from urllib import request
 import yaml
 
 from list_update import UpdateUrl
 from sub_convert import SubConvert
-from cv2box.utils import os_call
 
 # 文件路径定义
-Eterniy = './Eternity'
 readme = './README.md'
 
 sub_list_json = './sub/sub_list.json'
@@ -33,44 +31,47 @@ class SubMerge:
     def sub_merge(self, url_list):  # 将转换后的所有 Url 链接内容合并转换 YAML or Base64, ，并输出文件，输入订阅列表。
 
         content_list = []
-        os_call('rm -f ./sub/list/*')
+        error_markers = {
+            'Url 解析错误',
+            '订阅内容解析错误',
+            'Url 订阅内容无法解析',
+        }
+        Path(sub_list_path).mkdir(parents=True, exist_ok=True)
+        for old_file in Path(sub_list_path).glob('*.txt'):
+            old_file.unlink()
 
-        for index in range(len(url_list)):
-            content = self.sc.convert_remote(url_list[index]['url'], output_type='url', host='http://127.0.0.1:25500')
-            ids = url_list[index]['id']
-            remarks = url_list[index]['remarks']
+        for source in url_list:
+            ids = source['id']
+            remarks = source['remarks']
+            urls = source['url']
+            content = self.sc.convert_remote(urls, output_type='url', host='http://127.0.0.1:25500')
             if content == 'Url 解析错误':
-                content = self.sc.main(self.read_list(sub_list_json)[index]['url'], input_type='url', output_type='url')
-                if content != 'Url 解析错误':
+                content = self.sc.main(urls, input_type='url', output_type='url')
+                if content not in error_markers:
                     content_list.append(content)
                     print(f'Writing content of {remarks} to {ids:0>2d}.txt\n')
                 else:
                     print(f'Writing error of {remarks} to {ids:0>2d}.txt\n')
-                file = open(f'{sub_list_path}{ids:0>2d}.txt', 'w+', encoding='utf-8')
-                file.write('Url 解析错误')
-                file.close()
+                content_write(f'{sub_list_path}{ids:0>2d}.txt', content)
             elif content == 'Url 订阅内容无法解析':
-                file = open(f'{sub_list_path}{ids:0>2d}.txt', 'w+', encoding='utf-8')
-                file.write('Url 订阅内容无法解析')
-                file.close()
+                content_write(f'{sub_list_path}{ids:0>2d}.txt', content)
                 print(f'Writing error of {remarks} to {ids:0>2d}.txt\n')
-            elif content != None:
+            elif content and content not in error_markers:
                 content_list.append(content)
-                file = open(f'{sub_list_path}{ids:0>2d}.txt', 'w+', encoding='utf-8')
-                file.write(content)
-                file.close()
+                content_write(f'{sub_list_path}{ids:0>2d}.txt', content)
                 print(f'Writing content of {remarks} to {ids:0>2d}.txt\n')
             else:
-                file = open(f'{sub_list_path}{ids:0>2d}.txt', 'w+', encoding='utf-8')
-                file.write('Url 订阅内容无法解析')
-                file.close()
+                content_write(f'{sub_list_path}{ids:0>2d}.txt', 'Url 订阅内容无法解析')
                 print(f'Writing error of {remarks} to {ids:0>2d}.txt\n')
+
+        if not content_list:
+            raise RuntimeError('No valid subscription content was downloaded')
 
         print('Merging nodes...\n')
         content_raw = ''.join(
             content_list)  # https://python3-cookbook.readthedocs.io/zh_CN/latest/c02/p14_combine_and_concatenate_strings.html
         content_yaml = self.sc.main(content_raw, 'content', 'YAML',
-                                    {'dup_rm_enabled': True, 'format_name_enabled': True})
+                                    {'dup_rm_enabled': True, 'format_name_enabled': False})
         content_write(yaml_p, content_yaml)
 
         # content_base64 = self.sc.base64_encode(content_raw)
@@ -96,14 +97,11 @@ class SubMerge:
         with open(json_file, 'r', encoding='utf-8') as f:
             raw_list = json.load(f)
         input_list = []
-        for index in range(len(raw_list)):
-            if raw_list[index]['enabled']:
-                if split == False:
-                    urls = re.split('\|', raw_list[index]['url'])
-                else:
-                    urls = raw_list[index]['url']
-                raw_list[index]['url'] = urls
-                input_list.append(raw_list[index])
+        for item in raw_list:
+            if item['enabled']:
+                source = dict(item)
+                source['url'] = item['url'] if split else re.split(r'\|', item['url'])
+                input_list.append(source)
         return input_list
 
     def geoip_update(self, url):
@@ -114,8 +112,9 @@ class SubMerge:
         except Exception:
             print('Failed!\n')
 
-    def readme_update(self, readme_file='./README.md', sub_list=[]):  # 更新 README 节点信息
+    def readme_update(self, readme_file='./README.md', sub_list=None):  # 更新 README 节点信息
         print('更新 README.md 中')
+        sub_list = sub_list or []
         with open(readme_file, 'r', encoding='utf-8') as f:
             lines = f.readlines()
             f.close()
@@ -123,7 +122,6 @@ class SubMerge:
         thanks = []
         repo_amount_dic = {}
         for repo in sub_list:
-            line = ''
             if repo['enabled'] == True:
                 id = repo['id']
                 remarks = repo['remarks']
@@ -132,15 +130,20 @@ class SubMerge:
                 sub_file = f'./sub/list/{id:0>2d}.txt'
                 with open(sub_file, 'r', encoding='utf-8') as f:
                     proxies = f.readlines()
-                    if proxies == ['Url 解析错误'] or proxies == ['订阅内容解析错误']:
+                    error_markers = {
+                        'Url 解析错误',
+                        '订阅内容解析错误',
+                        'Url 订阅内容无法解析',
+                    }
+                    if ''.join(proxies).strip() in error_markers:
                         amount = 0
                     else:
                         amount = len(proxies)
                     f.close()
                 repo_amount_dic.setdefault(id, amount)
                 line = f'- [{remarks}]({repo_site}), 节点数量: `{amount}`\n'
-            if remarks != "alanbobs999/TopFreeProxies":
-                thanks.append(line)
+                if remarks != "alanbobs999/TopFreeProxies":
+                    thanks.append(line)
 
         # 所有节点打印
         for index in range(len(lines)):
@@ -149,9 +152,8 @@ class SubMerge:
                 lines.pop(index + 1)  # 删除节点数量
 
                 with open('./sub/sub_merge_yaml.yaml', 'r', encoding='utf-8') as f:
-                    proxies = f.read()
-                    proxies = proxies.split('\n- ')
-                    top_amount = len(proxies) - 1
+                    merged = yaml.safe_load(f) or {}
+                    top_amount = len(merged.get('proxies') or [])
 
                 lines.insert(index + 1, f'合并节点总数: `{top_amount}` 单一IP地址限制1个节点\n')
                 break

@@ -1,0 +1,149 @@
+{
+  "checked_at": "2026-09-21T08:12:06.043951+00:00",
+  "sources": [
+    {
+      "id": 8,
+      "remarks": "ssrsub/ssr",
+      "ok": true,
+      "checks": [
+        {
+          "url": "https://raw.githubusercontent.com/ssrsub/ssr/master/clash.yaml",
+          "ok": true,
+          "status": 200,
+          "bytes": 81413,
+          "sha256": "379d0fa05c298db252d88f76deabeca35ae2c0c33f933e2b02005999f2406116",
+          "content_type": "text/plain; charset=utf-8",
+          "detail": "plain subscription"
+        }
+      ]
+    },
+    {
+      "id": 24,
+      "remarks": "anaer/Sub",
+      "ok": true,
+      "checks": [
+        {
+          "url": "https://raw.githubusercontent.com/anaer/Sub/main/clash.yaml",
+          "ok": true,
+          "status": 200,
+          "bytes": 462597,
+          "sha256": "b551b32f146d36ff3696b3a1407c902646a3255df48ffce593d7d708faa2ba17",
+          "content_type": "text/plain; charset=utf-8",
+          "detail": "plain subscription"
+        }
+      ]
+    },
+    {
+      "id": 88,
+      "remarks": "ermaozi01/free_clash_vpn",
+      "ok": true,
+      "checks": [
+        {
+          "url": "https://raw.githubusercontent.com/ermaozi01/free_clash_vpn/main/subscribe/clash.yml",
+          "ok": true,
+          "status": 200,
+          "bytes": 16954,
+          "sha256": "81fb9c752f3fd33eb183bdb7441ae4cc6c6eb912b2170a43b14931ae7972864b",
+          "content_type": "text/plain; charset=utf-8",
+          "detail": "plain subscription"
+        }
+      ]
+    },
+    {
+      "id": 33,
+      "remarks": "Pawdroid/Free-servers",
+      "ok": true,
+      "checks": [
+        {
+          "url": "https://raw.githubusercontent.com/Pawdroid/Free-servers/main/sub",
+          "ok": true,
+          "status": 200,
+          "bytes": 5648,
+          "sha256": "d2be834c2bb807e529067376701d81a1ccf96f296aa308758a40e72931a384a7",
+          "content_type": "text/plain; charset=utf-8",
+          "detail": "base64 subscription"
+        }
+      ]
+    },
+    {
+      "id": 25,
+      "remarks": "xrayfree/free-ssr-ss-v2ray-vpn-clash",
+      "ok": true,
+      "checks": [
+        {
+          "url": "https://tt.vg/freev2",
+          "ok": true,
+          "status": 200,
+          "bytes": 35012,
+          "sha256": "59bbf537063aee1467152519a53eab3345e6082935c12685b5331d190e73771d",
+          "content_type": "text/plain; charset=utf-8",
+          "detail": "base64 subscription"
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "remarks": "ermaozi/get_subscribe",
+      "ok": true,
+      "checks": [
+        {
+          "url": "https://raw.githubusercontent.com/ermaozi/get_subscribe/main/subscribe/reachable/clash.yml",
+          "ok": true,
+          "status": 200,
+          "bytes": 89198,
+          "sha256": "9ce1b111e0c4e51ded4acd60685aa130da7fa4770ce5a8b23a60552d9384c87b",
+          "content_type": "text/plain; charset=utf-8",
+          "detail": "plain subscription"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "remarks": "Leon406/SubCrawler",
+      "ok": true,
+      "checks": [
+        {
+          "url": "https://raw.githubusercontent.com/Leon406/SubCrawler/main/sub/share/v2",
+          "ok": true,
+          "status": 200,
+          "bytes": 153733,
+          "sha256": "18328483cf3dc2c8fd928cebacb8a660ca2ecbe918eb946af9412737abc210f0",
+          "content_type": "text/plain; charset=utf-8",
+          "detail": "base64 subscription"
+        }
+      ]
+    },
+    {
+      "id": 89,
+      "remarks": "735754647/Free-Nodes",
+      "ok": true,
+      "checks": [
+        {
+          "url": "https://735754647.github.io/Free-Nodes/clash.yaml",
+          "ok": true,
+          "status": 200,
+          "bytes": 3980,
+          "sha256": "cf4898cb1791dde28e69c5b7f84c7e6f4f83fe224a580b3b0fada9c057aca2f8",
+          "content_type": "text/yaml",
+          "detail": "plain subscription"
+        }
+      ]
+    },
+    {
+      "id": 90,
+      "remarks": "steam-100/free-proxy-sub",
+      "ok": true,
+      "checks": [
+        {
+          "url": "https://raw.githubusercontent.com/steam-100/free-proxy-sub/data/clash.yaml",
+          "ok": true,
+          "status": 200,
+          "bytes": 7692,
+          "sha256": "c2df726a98c16d4f8ab1c80456e4471f8a99ef61560fb895b00f7777ceba3b96",
+          "content_type": "text/plain; charset=utf-8",
+          "detail": "plain subscription"
+        }
+      ]
+    }
+  ]
+}

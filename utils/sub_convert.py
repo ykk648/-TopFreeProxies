@@ -213,29 +213,23 @@ class SubConvert:
         proxies_list = sub_content['proxies']
 
         if dup_rm_enabled:  # 去重
-            begin = 0
             raw_length = len(proxies_list)
-            length = len(proxies_list)
-            while begin < length:
-                if (begin + 1) == 1:
-                    print(f'\n-----去重开始-----\n起始数量{length}')
-                elif (begin + 1) % 100 == 0:
-                    print(f'当前基准{begin + 1}-----当前数量{length}')
-                elif (begin + 1) == length and (begin + 1) % 100 != 0:
-                    repetition = raw_length - length
-                    print(f'当前基准{begin + 1}-----当前数量{length}\n重复数量{repetition}\n-----去重完成-----\n')
-                proxy_compared = proxies_list[begin]
-
-                begin_2 = begin + 1
-                while begin_2 <= (length - 1):
-                    # if proxy_compared['server'] == proxies_list[begin_2]['server'] and proxy_compared['port'] == \
-                    #         proxies_list[begin_2]['port']:
-                    # 直接server去重，防止一个server大量节点导致全部不可用
-                    if proxy_compared['server'] == proxies_list[begin_2]['server']:
-                        proxies_list.pop(begin_2)
-                        length -= 1
-                    begin_2 += 1
-                begin += 1
+            seen_servers = set()
+            unique_proxies = []
+            for proxy in proxies_list:
+                server = proxy.get('server')
+                if not server or server in seen_servers:
+                    continue
+                seen_servers.add(server)
+                unique_proxies.append(proxy)
+            proxies_list = unique_proxies
+            repetition = raw_length - len(proxies_list)
+            print(
+                f'\n-----去重完成-----\n'
+                f'起始数量{raw_length}\n'
+                f'当前数量{len(proxies_list)}\n'
+                f'重复数量{repetition}\n'
+            )
 
         url_list = []
 
@@ -405,40 +399,61 @@ class SubConvert:
 
             if 'trojan://' in line:
                 try:
-                    url_content = line.replace('trojan://', '')
-                    part_list = re.split('#', url_content,
-                                         maxsplit=1)  # https://www.runoob.com/python/att-string-split.html
-                    yaml_url.setdefault('name', urllib.parse.unquote(part_list[1]))
-
-                    server_part = part_list[0].replace('trojan://', '')
-                    server_part_list = re.split(':|@|\?|&',
-                                                server_part)  # 使用多个分隔符 https://blog.csdn.net/shidamowang/article/details/80254476 https://zhuanlan.zhihu.com/p/92287240
-                    yaml_url.setdefault('server', server_part_list[1])
-                    yaml_url.setdefault('port', server_part_list[2])
+                    parsed = urllib.parse.urlsplit(line)
+                    params = urllib.parse.parse_qs(parsed.query)
+                    yaml_url.setdefault(
+                        'name',
+                        urllib.parse.unquote(parsed.fragment) or 'Trojan Node',
+                    )
+                    yaml_url.setdefault('server', parsed.hostname)
+                    yaml_url.setdefault('port', parsed.port or 443)
                     yaml_url.setdefault('type', 'trojan')
-                    yaml_url.setdefault('password', server_part_list[0])
-                    server_part_list = server_part_list[3:]
-
-                    for config in server_part_list:
-                        if 'sni=' in config:
-                            yaml_url.setdefault('sni', config[4:])
-                        elif 'allowInsecure=' in config or 'tls=' in config:
-                            if config[-1] == 0:
-                                yaml_url.setdefault('tls', False)
-                        elif 'type=' in config:
-                            if config[5:] != 'tcp':
-                                yaml_url.setdefault('network', config[5:])
-                        elif 'path=' in config:
-                            yaml_url.setdefault('ws-path', config[5:])
-                        elif 'security=' in config:
-                            if config[9:] != 'tls':
-                                yaml_url.setdefault('tls', False)
-
-                    yaml_url.setdefault('skip-cert-verify', True)
+                    yaml_url.setdefault('password', urllib.parse.unquote(parsed.username or ''))
+                    sni = (params.get('sni') or params.get('peer') or params.get('servername') or [None])[0]
+                    if sni:
+                        yaml_url.setdefault('sni', sni)
+                    network = (params.get('type') or params.get('network') or ['tcp'])[0]
+                    if network != 'tcp':
+                        yaml_url.setdefault('network', network)
+                    path = (params.get('path') or ['/'])[0]
+                    host = (params.get('host') or [None])[0]
+                    if network == 'ws':
+                        ws_opts = {'path': urllib.parse.unquote(path)}
+                        if host:
+                            ws_opts['headers'] = {'Host': host}
+                        yaml_url.setdefault('ws-opts', ws_opts)
+                    allow_insecure = (params.get('allowInsecure') or params.get('allow_insecure') or ['0'])[0]
+                    yaml_url.setdefault('skip-cert-verify', allow_insecure in ('1', 'true', 'True'))
+                    security = (params.get('security') or ['tls'])[0]
+                    if security not in ('tls', ''):
+                        yaml_url.setdefault('tls', False)
 
                     url_list.append(yaml_url)
                 except Exception as err:
                     print(f'yaml_encode 解析 trojan 节点发生错误: {err}')
+                    pass
+
+            if line.startswith(('socks://', 'socks5://', 'http://', 'https://')):
+                try:
+                    parsed = urllib.parse.urlsplit(line)
+                    proxy_type = 'socks5' if parsed.scheme in ('socks', 'socks5') else 'http'
+                    default_port = 1080 if proxy_type == 'socks5' else (443 if parsed.scheme == 'https' else 80)
+                    yaml_url.setdefault(
+                        'name',
+                        urllib.parse.unquote(parsed.fragment) or f'{proxy_type.upper()} Node',
+                    )
+                    yaml_url.setdefault('server', parsed.hostname)
+                    yaml_url.setdefault('port', parsed.port or default_port)
+                    yaml_url.setdefault('type', proxy_type)
+                    if parsed.username is not None:
+                        yaml_url.setdefault('username', urllib.parse.unquote(parsed.username))
+                    if parsed.password is not None:
+                        yaml_url.setdefault('password', urllib.parse.unquote(parsed.password))
+                    if parsed.scheme == 'https':
+                        yaml_url.setdefault('tls', True)
+                    url_list.append(yaml_url)
+                except Exception as err:
+                    print(f'yaml_encode 解析 HTTP/SOCKS 节点发生错误: {err}')
                     pass
 
         yaml_content_dic = {'proxies': url_list}
@@ -499,18 +514,40 @@ class SubConvert:
 
                 elif proxy[
                     'type'] == 'trojan':  # Trojan 节点提取, 由 trojan_proxy 中参数再加上 # 加注释(URL_encode) # trojan Go https://p4gefau1t.github.io/trojan-go/developer/url/
-                    if 'tls' in proxy.keys() and 'network' in proxy.keys():
-                        if proxy['tls'] == True and proxy['network'] != 'tcp':
-                            network_type = proxy['network']
-                            trojan_go = f'?security=tls&type={network_type}&headerType=none'
-                        elif proxy['tls'] == False and proxy['network'] != 'tcp':
-                            trojan_go = f'??allowInsecure=0&type={network_type}&headerType=none'
-                    else:
-                        trojan_go = '?allowInsecure=1'
-                    if 'sni' in proxy.keys():
-                        trojan_go = trojan_go + '&sni=' + proxy['sni']
-                    trojan_proxy = str('trojan://' + str(proxy['password']) + '@' + str(proxy['server']) + ':' + str(
-                        proxy['port']) + trojan_go + '#' + str(urllib.parse.quote(proxy['name'])) + '\n')
+                    params = {
+                        'allowInsecure': '1' if proxy.get('skip-cert-verify') else '0',
+                    }
+                    network = proxy.get('network', 'tcp')
+                    if network != 'tcp':
+                        params['type'] = network
+                    if proxy.get('sni'):
+                        params['sni'] = proxy['sni']
+                    if proxy.get('tls') is False:
+                        params['security'] = 'none'
+                    ws_opts = proxy.get('ws-opts') or {}
+                    ws_path = ws_opts.get('path') or proxy.get('ws-path')
+                    if ws_path:
+                        params['path'] = ws_path
+                    ws_headers = ws_opts.get('headers') or proxy.get('ws-headers') or {}
+                    ws_host = ws_headers.get('Host') or ws_headers.get('host')
+                    if ws_host:
+                        params['host'] = ws_host
+                    server = str(proxy['server'])
+                    if ':' in server and not server.startswith('['):
+                        server = f'[{server}]'
+                    trojan_proxy = str(
+                        'trojan://'
+                        + urllib.parse.quote(str(proxy['password']), safe='')
+                        + '@'
+                        + server
+                        + ':'
+                        + str(proxy['port'])
+                        + '?'
+                        + urllib.parse.urlencode(params)
+                        + '#'
+                        + str(urllib.parse.quote(proxy['name']))
+                        + '\n'
+                    )
                     protocol_url.append(trojan_proxy)
 
                 elif proxy['type'] == 'ssr':  # ssr 节点提取, 由 ssr_base64_decoded 中所有参数总体 base64 encode
@@ -540,6 +577,28 @@ class SubConvert:
                     ssr_proxy = 'ssr://' + self.base64_encode(
                         server + ':' + port + ':' + protocol + ':' + cipher + ':' + obfs + ':' + password + '/?group=' + group + '&remarks=' + remarks + '&obfsparam=' + obfsparam + '&protoparam=' + protoparam + '\n')
                     protocol_url.append(ssr_proxy)
+
+                elif proxy['type'] in ('socks', 'socks5', 'http'):
+                    proxy_type = proxy['type']
+                    if proxy_type in ('socks', 'socks5'):
+                        scheme = 'socks5'
+                    else:
+                        scheme = 'https' if proxy.get('tls') else 'http'
+                    username = proxy.get('username')
+                    password = proxy.get('password')
+                    auth = ''
+                    if username is not None:
+                        auth = urllib.parse.quote(str(username), safe='')
+                        if password is not None:
+                            auth += ':' + urllib.parse.quote(str(password), safe='')
+                        auth += '@'
+                    server = str(proxy['server'])
+                    if ':' in server and not server.startswith('['):
+                        server = f'[{server}]'
+                    name = urllib.parse.quote(str(proxy.get('name', f'{proxy_type.upper()} Node')))
+                    protocol_url.append(
+                        f'{scheme}://{auth}{server}:{proxy["port"]}#{name}\n'
+                    )
 
             yaml_content = ''.join(protocol_url)
             return yaml_content
@@ -574,7 +633,8 @@ class SubConvert:
         if output_type == 'clash':
             converted_url = sever_host + '/sub?target=clash&url=' + url + '&insert=false&emoji=true&list=true'
             try:
-                resp = requests.get(converted_url)
+                resp = requests.get(converted_url, timeout=(3, 20))
+                resp.raise_for_status()
             except Exception as err:
                 print(err)
                 return 'Url 解析错误'
@@ -585,7 +645,8 @@ class SubConvert:
         elif output_type == 'base64':
             converted_url = sever_host + '/sub?target=mixed&url=' + url + '&insert=false&emoji=true&list=true'
             try:
-                resp = requests.get(converted_url)
+                resp = requests.get(converted_url, timeout=(3, 20))
+                resp.raise_for_status()
             except Exception as err:
                 print(err)
                 return 'Url 解析错误'
@@ -596,7 +657,8 @@ class SubConvert:
         elif output_type == 'url':
             converted_url = sever_host + '/sub?target=mixed&url=' + url + '&insert=false&emoji=true&list=true'
             try:
-                resp = requests.get(converted_url)
+                resp = requests.get(converted_url, timeout=(3, 20))
+                resp.raise_for_status()
             except Exception as err:
                 print(err)
                 return 'Url 解析错误'

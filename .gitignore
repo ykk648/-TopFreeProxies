@@ -1,2 +1,9 @@
 /auto_action.bat
 /utils/get_list.py
+/speedtest-staged/
+/clash-verge.yaml
+/sub/list/*.txt
+/sub/sub_merge_yaml.yaml
+*.log
+__pycache__/
+*.pyc
